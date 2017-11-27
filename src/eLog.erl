@@ -25,9 +25,26 @@ log(LogLevel, Module, Function, Args, ErrorDesc, LineNumber, ProtModule) ->
 	    (catch eLogWriter:log(LogLevel, Module, Function, 
 				  Args, ErrorDesc, LineNumber));
 	info ->
-	    (catch ProtModule:info(LogLevel, Module, Function, 
-				   Args, ErrorDesc, LineNumber));
+	    info(ProtModule, {LogLevel, Module, Function, Args,
+                              ErrorDesc, LineNumber});
         none ->
 	    ok
     end.
 
+info(ProtModule, InfoArgs) when is_atom(ProtModule) ->
+    info2(ProtModule, InfoArgs);
+info({LocalProtModule, _RemoteProtModule}, InfoArgs)
+  when is_atom(LocalProtModule) ->
+    info2(LocalProtModule, InfoArgs);
+info(ProtModules, InfoArgs) when is_list(ProtModules) ->
+    [info2(ProtModule, InfoArgs) || ProtModule <- ProtModules,
+                                    is_atom(ProtModule)],
+    ok;
+info(_ProtModule, _InfoArgs) ->
+    error.
+
+info2(undefined, _InfoArgs) ->
+    ok;
+info2(ProtModule, {LogLevel, Module, Function, Args, ErrorDesc, LineNumber}) ->
+    (catch ProtModule:info(LogLevel, Module, Function,
+                           Args, ErrorDesc, LineNumber)).
